@@ -4,6 +4,36 @@
       "skill_id": "",
       "was_cloned": false,
       "merge": {}
+    },
+    "easyapps": {
+      "skill_id": "amzn1.ask.skill.a46d63f7-aaac-42a1-8bdd-da23ed3232a5",
+      "was_cloned": false,
+      "merge": {},
+      "resources": {
+        "manifest": {
+          "eTag": "13dc299004bdf4b328590e5dcf1b0244"
+        },
+        "interactionModel": {
+          "es-ES": {
+            "eTag": "e54f7d0e567c13ed176718c04508a714"
+          }
+        },
+        "lambda": [
+          {
+            "alexaUsage": [
+              "custom/default",
+              "custom/EU"
+            ],
+            "arn": "arn:aws:lambda:eu-west-1:594254045502:function:alexa-voicemail",
+            "awsRegion": "eu-west-1",
+            "codeUri": "lambda/custom",
+            "functionName": "alexa-voicemail",
+            "handler": "index.handler",
+            "revisionId": "a1304dfe-1eb2-48e1-a261-0117ebb59dcf",
+            "runtime": "nodejs12.x"
+          }
+        ]
+      }
     }
   }
 }

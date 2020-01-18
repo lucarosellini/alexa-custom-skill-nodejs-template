@@ -52,6 +52,8 @@ const LoadAttributesRequestInterceptor = {
                 //copy persistent attribute to session attributes
                 attributesManager.setSessionAttributes(persistentAttributes);
             }
+
+            
         } catch (err){
             console.log("Cannot execute LoadAttributesRequestInterceptor", JSON.stringify(err));
         }
@@ -124,6 +126,7 @@ const LastIntentResponseInterceptor = {
         attributesManager.setSessionAttributes(sessionAttributes); 
     } 
 };
+
 
 module.exports = {
     LoggingRequestInterceptor,

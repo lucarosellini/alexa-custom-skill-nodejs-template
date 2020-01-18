@@ -4,66 +4,150 @@
 const Alexa = require('ask-sdk-core');
 const interceptors = require('./interceptors');
 const persistence = require("./persistence");
+const constants = require("./constants");
+const mail = require("./mail");
+const utils = require("./utils");
 
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
     },
-    handle(handlerInput) {
+    async handle(handlerInput) {
+        utils.updateStatus(handlerInput);
         const request = handlerInput.requestEnvelope.request;
+        const { serviceClientFactory, responseBuilder } = handlerInput;
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-
-        const userName = 'Pepe';
     
-        const speakOutput = handlerInput.t('WELCOME_MESSAGE', {user_name: userName});
-        return handlerInput.responseBuilder
+        const accessToken = handlerInput.requestEnvelope.context.System.user.accessToken;
+
+        let speakOutput = "";
+
+        if (!accessToken) {
+            /* This is the first time the user uses the skill. 
+               Check if the user has done account linking. 
+             */
+            speakOutput = handlerInput.t('WELCOME_MESSAGE_FIRST_TIME', { skill_name: constants.skill_name }) +
+                handlerInput.t('ACCOUNT_LINKING_REQUIRED');
+
+            return responseBuilder
+                .speak(speakOutput)
+                .withLinkAccountCard()
+                .withShouldEndSession(true)
+                .getResponse();
+        }
+
+        if (!sessionAttributes.status) {
+            speakOutput = handlerInput.t('WELCOME_MESSAGE_FIRST_TIME', { skill_name: constants.skill_name }) +
+                handlerInput.t('WELCOME_MESSAGE_CTA') +
+                handlerInput.t('WHAT_DO_YOU_WANT_TO_DO');
+
+            return responseBuilder
+                .speak(speakOutput)
+                .reprompt(speakOutput)
+                .getResponse();
+        }
+
+        // Check if we have access to user's name
+        const upsServiceClient = serviceClientFactory.getUpsServiceClient();
+        const profileName = '';
+
+        try {
+            profileName = await upsServiceClient.getProfileGivenName();
+        } catch (e) {
+            console.log("Permission to access given name not granted");
+        }
+        if (!profileName) {
+            speakOutput = handlerInput.t('WELCOME_MESSAGE_FIRST_TIME', { skill_name: constants.skill_name }) +
+                handlerInput.t('WELCOME_MESSAGE_CTA') +
+                handlerInput.t('WHAT_DO_YOU_WANT_TO_DO');
+        } else {
+            speakOutput = profileName + ', ' +
+                handlerInput.t('WELCOME_MESSAGE_FIRST_TIME', { skill_name: constants.skill_name }) +
+                handlerInput.t('WELCOME_MESSAGE_CTA') +
+                handlerInput.t('WHAT_DO_YOU_WANT_TO_DO');
+        }
+
+        return responseBuilder
             .speak(speakOutput)
-            .reprompt(handlerInput.t('WELCOME_MESSAGE_REPROMPT'))
+            .reprompt(handlerInput.t('WHAT_DO_YOU_WANT_TO_DO'))
             .getResponse();
     }
 };
-const HolaIntentHandler = {
+const CheckEmailIntentHandler = {
     canHandle(handlerInput) {
         return handlerInput.requestEnvelope.request.type === 'IntentRequest'
-            && handlerInput.requestEnvelope.request.intent.name === 'HolaIntent';
+            && handlerInput.requestEnvelope.request.intent.name === 'CheckEmailIntent';
+    },
+    async handle(handlerInput) {
+        utils.updateStatus(handlerInput);
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        const accessToken = handlerInput.requestEnvelope.context.System.user.accessToken;
+
+        if (!accessToken) {
+            return LaunchRequestHandler.handle(handlerInput);
+        }
+
+        const unreadEmails = await mail.countUnreadEmails(accessToken);
+
+        //const slot = Alexa.getSlot(handlerInput.requestEnvelope, "userName");
+
+        //console.log("userName slot: ", JSON.stringify(slot));
+        let speakOutput = '';
+        if (unreadEmails == 0){
+            speakOutput = handlerInput.t('NO_UNREAD_EMAILS');
+        } else if (unreadEmails == 1){
+            speakOutput = handlerInput.t('UNREAD_EMAIL');
+        } else {
+            speakOutput = handlerInput.t('UNREAD_EMAILS', { unread_emails: unreadEmails });
+        }
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .withShouldEndSession(true)
+            .getResponse();
+    },
+};
+
+const ReadEmailsIntentHandler = {
+    canHandle(handlerInput) {
+        return handlerInput.requestEnvelope.request.type === 'IntentRequest'
+            && handlerInput.requestEnvelope.request.intent.name === 'ReadEmailsIntent';
     },
     handle(handlerInput) {
-
+        utils.updateStatus(handlerInput);
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
-        
+        const accessToken = handlerInput.requestEnvelope.context.System.user.accessToken;
+
+        if (!accessToken) {
+            return LaunchRequestHandler.handle(handlerInput);
+        }
+
         const slot = Alexa.getSlot(handlerInput.requestEnvelope, "userName");
 
         console.log("userName slot: ", JSON.stringify(slot));
 
-        //const slotValue = Alexa.getSlotValue(handlerInput.requestEnvelope, "slotName");
-    
-        /* For custom slot you should check the resolutionsPerAuthorityArray */
-        /*
-        if (!slot || !slot.resolutions || !slot.resolutions.resolutionsPerAuthority[0] || 
-                slot.resolutions.resolutionsPerAuthority[0].status.code === 'ER_SUCCESS_NO_MATCH') {
-            
-            const speakOutput = handlerInput.t('GREETING_MSG');
-            return handlerInput.responseBuilder
-                .speak(speakOutput)
-                .withShouldEndSession(true)
-                .getResponse();
-            
-        } else {
-            
-            const speakOutput = handlerInput.t('PERSONALIZED_GREETING_MSG', {user_name: skillDescription});
-            return handlerInput.responseBuilder
-                .speak(speakOutput)
-                .withShouldEndSession(true)
-                .getResponse();
-        }
-        */
 
-       const speakOutput = handlerInput.t('GREETING_MSG');
-       return handlerInput.responseBuilder
-           .speak(speakOutput)
-           .withShouldEndSession(true)
-           .getResponse();
+        const speakOutput = handlerInput.t('GREETING_MSG');
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .withShouldEndSession(true)
+            .getResponse();
     },
+};
+
+const FallbackIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'AMAZON.FallbackIntent';
+    },
+    handle(handlerInput) {
+        const speakOutput = 'You can say hello to me! How can I help?';
+
+        return handlerInput.responseBuilder
+            .speak(speakOutput)
+            .reprompt(speakOutput)
+            .getResponse();
+    }
 };
 
 const HelpIntentHandler = {
@@ -114,7 +198,7 @@ const IntentReflectorHandler = {
     },
     handle(handlerInput) {
         const intentName = handlerInput.requestEnvelope.request.intent.name;
-        const speechText = handlerInput.t('REFLECTOR_MSG', {intent: intentName});
+        const speechText = handlerInput.t('REFLECTOR_MSG', { intent: intentName });
 
         return handlerInput.responseBuilder
             .speak(speechText)
@@ -147,18 +231,20 @@ const ErrorHandler = {
 exports.handler = Alexa.SkillBuilders.custom()
     .addRequestHandlers(
         LaunchRequestHandler,
-        HolaIntentHandler,
+        FallbackIntentHandler,
+        CheckEmailIntentHandler,
+        ReadEmailsIntentHandler,
         HelpIntentHandler,
         CancelAndStopIntentHandler,
         SessionEndedRequestHandler,
         IntentReflectorHandler, // make sure IntentReflectorHandler is last so it doesn't override your custom intent handlers
-        ) 
+    )
     .addRequestInterceptors(
         interceptors.LocalisationRequestInterceptor,
         interceptors.LoggingRequestInterceptor,
         interceptors.LoadAttributesRequestInterceptor,
         interceptors.LoadTimezoneRequestInterceptor,
-        )
+    )
     .addResponseInterceptors(
         interceptors.LoggingResponseInterceptor,
         interceptors.LastIntentResponseInterceptor,

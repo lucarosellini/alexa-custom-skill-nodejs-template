@@ -4,7 +4,7 @@ module.exports = {
         function isAlexaHosted() {
             return process.env.S3_PERSISTENCE_BUCKET;
         }
-        const tableName = 'myskill-dynamodb-preferences';
+        const tableName = 'voicemail-dynamodb-preferences';
         if(isAlexaHosted()) {
             const {S3PersistenceAdapter} = require('ask-sdk-s3-persistence-adapter');
             return new S3PersistenceAdapter({ 

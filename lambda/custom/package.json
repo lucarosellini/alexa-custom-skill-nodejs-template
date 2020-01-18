@@ -9,9 +9,11 @@
   "author": "Amazon Alexa",
   "license": "ISC",
   "dependencies": {
+    "@microsoft/microsoft-graph-client": "^2.0.0",
     "ask-sdk-core": "^2.6.0",
     "ask-sdk-dynamodb-persistence-adapter": "^2.3.0",
     "ask-sdk-model": "^1.18.0",
-    "i18next": "^15.0.5"
+    "i18next": "^15.0.5",
+    "isomorphic-fetch": "^2.2.1"
   }
 }

@@ -1,24 +1,27 @@
 {
     "interactionModel": {
         "languageModel": {
-            "invocationName": "test modelo",
+            "invocationName": "voice mail",
             "intents": [
                 {
                     "name": "AMAZON.CancelIntent",
                     "samples": []
                 },
                 {
-                    "name": "HolaIntent",
-                    "slots": [
-                        {
-                            "name": "userName",
-                            "type": "AMAZON.FirstName"
-                        }
-                    ],
+                    "name": "CheckEmailIntent",
+                    "slots": [],
                     "samples": [
-                        "hola me llamo {userName}",
-                        "soy {userName}",
-                        "hola amigo"
+                        "correo nuevo",
+                        "cuantos correos no leído tengo",
+                        "dime si tengo correo no leído",
+                        "chequea mi bandeja de entrada",
+                        "tengo correo",
+                        "tengo nuevos correos",
+                        "tengo nuevos emails",
+                        "tengo correo nuevo",
+                        "controla mi correo no leído",
+                        "controla mi correo",
+                        "tengo correo no leído"
                     ]
                 },
                 {
@@ -32,8 +35,27 @@
                 {
                     "name": "AMAZON.NavigateHomeIntent",
                     "samples": []
+                },
+                {
+                    "name": "AMAZON.FallbackIntent",
+                    "samples": []
+                },
+                {
+                    "name": "ReadEmailsIntent",
+                    "slots": [],
+                    "samples": [
+                        "quiero que leas mis correos nuevos",
+                        "lee mi outlook",
+                        "lee mi hotmail",
+                        "lee mi correo de hotmail",
+                        "lee mi correo en voz alta",
+                        "leer mi correo",
+                        "lee mi correo",
+                        "lea mis correos"
+                    ]
                 }
-            ]
+            ],
+            "types": []
         }
     }
 }
